@@ -8,7 +8,14 @@ def pre_process(file, rows):
     data = to_lowercase(data=data)
 
     data = normalize_cols(data=data)
-    data.to_csv('./dating.csv', index=False) #potentially could do index=False
+    data = encode(data=data)
+    data.to_csv('./dating.csv', index=False)
+
+    test_data = data.sample(frac=0.2, random_state=25)
+    test_data.to_csv('./testSet.csv', index=False)
+    training_data = data.drop(test_data.index)
+    training_data.to_csv('./trainingSet.csv', index=False)
+
 
 # function that strips single quotes (') of three dimensions of the data set.
 # also counts and outputs the number of datapoints that have quotes replaced
@@ -70,6 +77,35 @@ def normalize_cols(data):
     return data
 
 
+def encode(data):
+    # start with race for now
+
+    #data.to_csv('./after_sorting.csv',index=False)
+
+    cols = ['gender', 'race', 'race_o', 'field']
+    attrs = ['female', 'Black/African American', 'Other', 'economics']
+
+
+    for col in cols:
+        data.sort_values(by=[col], inplace=True)
+        unique = data[col].unique()
+        col_loc = data.columns.get_loc(col)
+
+        for attr in range(len(unique) - 1):
+            new_col = np.zeros(shape=(len(data), 1))
+            data.insert(loc=col_loc + 1, column='{0}_{1}'.format(col, unique[attr]), value=new_col, allow_duplicates=True)
+            col_loc += 1
+
+
+        for row in range(len(data)):
+            val = data.loc[row, col]
+            if val != unique[-1]:
+                data.loc[row, '{0}_{1}'.format(col, val)] = 1
+
+        data.drop(columns=[col], axis=1, inplace=True)
+
+    #data.to_csv('./after_encoding.csv', index=False)
+    return data
 
 
 if __name__ == '__main__':
