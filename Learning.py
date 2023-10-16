@@ -12,17 +12,38 @@ def lrsvm(trainingDataFilename, testDataFilename, modelIdx):
         lambda_ = 0.01  # lambda value for L2 regularization
         tol = math.pow(10, -6)  # stop when l2 norm is less than this value
         iterations = 500
+        eta = 0.01
 
         Y_Train = trainingSet['decision']
         X_Train = trainingSet.drop(columns=['decision'])
+
         Y_Test = testSet['decision']
         X_Test = testSet.drop(columns=['decision'])
 
+        w = np.zeros(shape=(X_Train.shape[1]))
 
-        w = np.zeros(shape=)
+
+        for i in range(iterations):
+            dot = np.dot(X_Train, w)
+            #print(dot)
+            y_hat = sigmoid(dot)
+            gradient = np.dot(-Y_Train + y_hat, X_Train) + lambda_ * w
+            weights = w - eta * gradient
 
 
-        #for i in range(iterations):
+            if np.linalg.norm(w - weights) < tol:
+                return
+
+            w = weights
+
+        return w
+
+
+
+
+
+    def sigmoid(val):
+        return 1/(1 + np.exp(-val))
 
 
 
@@ -31,7 +52,8 @@ def lrsvm(trainingDataFilename, testDataFilename, modelIdx):
     trainingSet = pd.read_csv(trainingDataFilename)
     testSet = pd.read_csv(testDataFilename)
     if modelIdx == 1:
-        lr(trainingSet=trainingSet, testSet=testSet)
+        training = lr(trainingSet=trainingSet, testSet=testSet)
+        print(training)
 
 
 
