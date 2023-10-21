@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-
+# ignore warnings
 def pre_process(file, rows):
     data = pd.read_csv(file, nrows=rows)
     data = replace_quotes(data=data)
