@@ -28,39 +28,34 @@ def lrsvm(trainingDataFilename, testDataFilename, modelIdx):
         # need to set intercept to 1
 
         intercept = np.ones(shape=(X_Train.shape[0], 1))
-        X_Train = np.hstack(tup=(intercept, X_Train))
+        X_Train.insert(loc=0, column='intercept', value=intercept)
         w = np.zeros(shape=(X_Train.shape[1]))
         #print(X_Train.shape, w.shape)
 
         for i in range(iterations):
-            dot = np.dot(w, X_Train.T)
-
-            #print(dot.shape)
-
+            new_w = w
+            dot = np.dot(X_Train, w)
             y_hat = sigmoid(dot)
+
             gradient = np.dot(-Y_Train + y_hat, X_Train) + lambda_ * w
-            weights = w - eta * gradient
+            new_w = new_w - eta * gradient
 
-            if np.linalg.norm(np.add(w, -weights)) < tol:
-                return
+            l2_norm = np.linalg.norm(np.subtract(new_w, w))
+            w = new_w
+            if l2_norm < tol:
+                break
 
-            w = weights
-
-        test_data = np.dot(X_Train, w)
-        #print (test_data)
-        train_prediction = np.round(sigmoid(test_data))
+        train_data = np.dot(X_Train, w)
+        train_prediction = np.round(sigmoid(train_data))
         train_cnt = 0
         for i, j in zip(train_prediction, Y_Train):
-            # TODO: instead of checking for 1, check to see if they equal the corresponding value in X_Train
             if i == j:
                 train_cnt += 1
 
-
-
         test_intercept = np.ones(shape=(X_Test.shape[0], 1))
-        X_Test = np.hstack(tup=(test_intercept, X_Test))
-        train_data = np.dot(X_Test, w)
-        test_prediction = np.round(sigmoid(train_data))
+        X_Test.insert(loc=0, column='intercept', value=test_intercept)
+        test_data = np.dot(X_Test, w)
+        test_prediction = np.round(sigmoid(test_data))
         test_cnt = 0
 
         for i, j in zip(test_prediction, Y_Test):
@@ -68,9 +63,9 @@ def lrsvm(trainingDataFilename, testDataFilename, modelIdx):
                 test_cnt += 1
 
         print("Input: lrsvm(trainingSet.csv, testSet.csv, 1)")
-        print("Expected Output:")
         print("Training Accuracy LR: {0:.2f}".format(train_cnt / len(train_prediction)))
         print("Testing Accuracy LR: {0:.2f}".format(test_cnt / len(test_prediction)))
+        return (train_cnt / len(train_prediction)), (test_cnt / len(test_prediction))
 
     def sigmoid(val):
         return 1 / (1 + np.exp(-val))
@@ -96,14 +91,48 @@ def lrsvm(trainingDataFilename, testDataFilename, modelIdx):
         #print(w.shape, X_Train)
 
         # need to iterate up to iterations
+        N = X_Train.shape[0]
 
         for i in range(iterations):
             y_hat = np.dot(X_Train, w)
-            #print(Y_Train.shape, y_hat.shape)
-            delta_j = np.zeros(X_Train.columns)
-            if np.dot(y_hat.T, Y_Train) < 1:
-                for index, col in enumerate(X_Train.columns):
+            dot = np.multiply(y_hat, Y_Train)
+            new_w = w
+            for index, row in X_Train.iterrows():
+                delta_ji = 0
+                if dot[index] < 1:
+                    delta_ji = np.dot(Y_Train[index], row) #X_Train.loc[index,]
+                delta_j = ((lambda_ * w) - delta_ji)/N
+                new_w = new_w - eta * delta_j
+            l2_norm = np.linalg.norm(np.subtract(new_w, w))
+            w = new_w
+            if l2_norm < tol:
+                break
 
+        train_data = np.dot(X_Train, w)
+        train_cnt = 0
+        for x, y in zip(train_data, Y_Train):
+            res = -1
+            if x >= 0:
+                res = 1
+            if res == y:
+                train_cnt += 1
+
+        intercept = np.ones(shape=(X_Test.shape[0], 1))
+        X_Test.insert(loc=0, column='intercept', value=intercept)
+        test_data = np.dot(X_Test, w)
+        test_cnt = 0
+        for x, y in zip(test_data, Y_Test):
+            res = -1
+            if x >= 0:
+                res = 1
+            if res == y:
+                test_cnt += 1
+
+        print("Input: lrsvm(trainingSet.csv, testSet.csv, 2)")
+        print("Training Accuracy SVM: {0:.2f}".format(train_cnt/len(train_data)))
+        print("Testing Accuracy SVM: {0:.2f}".format(test_cnt/len(test_data)))
+
+        return train_cnt/len(train_data), test_cnt/len(test_data)
 
 
 
@@ -124,9 +153,6 @@ def lrsvm(trainingDataFilename, testDataFilename, modelIdx):
 
 
 
-
-
-
 if __name__ == '__main__':
-    #lrsvm('./trainingSet.csv', './testSet.csv', 1)
+    lrsvm('./trainingSet.csv', './testSet.csv', 1)
     lrsvm('./trainingSet.csv', './testSet.csv', 2)

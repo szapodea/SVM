@@ -9,6 +9,10 @@ __pycache__/
 # CSV files
 *.csv
 
+NBC.py
+PreProcess.py
+Bin.py
+
 # Distribution / packaging
 .Python
 build/

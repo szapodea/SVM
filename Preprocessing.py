@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 
+import warnings
+
+warnings.filterwarnings('ignore')
+
 # ignore warnings
 def pre_process(file, rows):
     data = pd.read_csv(file, nrows=rows)
@@ -84,18 +88,18 @@ def encode(data):
 
     cols = ['gender', 'race', 'race_o', 'field']
     attrs = ['female', 'Black/African American', 'Other', 'economics']
-
+    print_cols = {}
 
     for col in cols:
         data.sort_values(by=[col], inplace=True)
         unique = data[col].unique()
         col_loc = data.columns.get_loc(col)
-
+        initial_col = col_loc
         for attr in range(len(unique) - 1):
             new_col = np.zeros(shape=(len(data), 1))
             data.insert(loc=col_loc + 1, column='{0}_{1}'.format(col, unique[attr]), value=new_col, allow_duplicates=True)
             col_loc += 1
-
+        print_cols[col] = (initial_col, col_loc)
 
         for row in range(len(data)):
             val = data.loc[row, col]
@@ -103,8 +107,24 @@ def encode(data):
                 data.loc[row, '{0}_{1}'.format(col, val)] = 1
 
         data.drop(columns=[col], axis=1, inplace=True)
+    columns = data.columns
+    j = 0
+    for col in print_cols.keys():
+        start, end = print_cols[col]
+        print("Mapped vector for {0} in column {1}: ".format(cols[j], attrs[j]), end="")
+        print('[', end="")
+        for i in range(start, end):
+            if columns[i] == 'gender_female' or columns[i] == 'race_Black/African American' \
+                    or columns[i] == 'race_o_Other' or columns[i] == 'field_economics':
+                print(' 1 ', end="")
+            else:
+                print(' 0 ', end="")
+        print(']')
+        j += 1
 
-    #data.to_csv('./after_encoding.csv', index=False)
+
+
+
     return data
 
 
